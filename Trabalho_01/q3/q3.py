@@ -29,7 +29,6 @@ histograma_r, histograma_g, histograma_b = calcular_histograma(imagem)
 
 # Concatenar os histogramas em um único vetor
 histograma_global = np.concatenate((histograma_r, histograma_g, histograma_b))
-print(histograma_global)
 
 # Salvar o vetor do histograma em um arquivo texto
 np.savetxt('histograma_global.txt', histograma_global, fmt='%d')
