@@ -1,66 +1,94 @@
 import cv2
 import numpy as np
 
-import cv2
-import numpy as np
-
 def expansao_contraste_linear(imagem):
-    I_min, I_max = np.min(imagem), np.max(imagem)
-    L_min, L_max = 0, 255  # Valores desejados
+    # Separar os canais manualmente
+    canais = [imagem[:, :, 0], imagem[:, :, 1], imagem[:, :, 2]]  # R, G, B
 
-    # Expansão linear manual
-    imagem_expansao = (imagem - I_min) * ((L_max - L_min) / (I_max - I_min)) + L_min
+    canais_expandidos = []
+    for canal in canais:
+        I_min, I_max = np.min(canal), np.max(canal)
+        L_min, L_max = 0, 255
 
-    # Clipping manual dos valores para manter no intervalo [0, 255]
-    imagem_expansao[imagem_expansao > 255] = 255
-    imagem_expansao[imagem_expansao < 0] = 0
+        # Aplicar a expansão de contraste
+        canal_expansao = (canal - I_min) * ((L_max - L_min) / (I_max - I_min)) + L_min
 
-    return imagem_expansao
+        # Garantir valores válidos entre 0 e 255
+        canal_expansao = np.clip(canal_expansao, 0, 255)
+        canais_expandidos.append(canal_expansao)
+
+    # Reunir os canais manualmente
+    imagem_expansao = np.stack(canais_expandidos, axis=-1)
+    return imagem_expansao.astype(np.uint8)
+
 
 def compressao_expansao(imagem, c=0.0001):
-    # Aplicar a transformação quadrática
-    imagem_transformada = c * np.power(imagem, 2)
+    # Separar os canais manualmente
+    canais = [imagem[:, :, 0], imagem[:, :, 1], imagem[:, :, 2]]  # R, G, B
 
-    # Escalar os valores resultantes para [0, 255]
-    imagem_transformada = (imagem_transformada - np.min(imagem_transformada)) * (255 / (np.max(imagem_transformada) - np.min(imagem_transformada)))
+    canais_comprimidos = []
+    for canal in canais:
+        # Aplicar a transformação quadrática
+        canal_compressao = c * np.power(canal, 2)
 
-    return imagem_transformada.astype(np.uint8)
+        # Reescalar para [0, 255]
+        canal_compressao = (canal_compressao - np.min(canal_compressao)) * (255 / (np.max(canal_compressao) - np.min(canal_compressao)))
 
+        # Garantir valores válidos entre 0 e 255
+        canal_compressao = np.clip(canal_compressao, 0, 255)
+        canais_comprimidos.append(canal_compressao)
+
+    # Reunir os canais manualmente
+    imagem_compressao = np.stack(canais_comprimidos, axis=-1)
+    return imagem_compressao.astype(np.uint8)
 
 def dente_de_serra(imagem, T=128):
-    # Aplicar a função dente de serra
-    imagem_transformada = (imagem % T) * (255 // T)
+    # Separar os canais manualmente
+    canais = [imagem[:, :, 0], imagem[:, :, 1], imagem[:, :, 2]]  # R, G, B
 
-    # Clipping manual dos valores para manter no intervalo [0, 255]
-    imagem_transformada[imagem_transformada > 255] = 255
-    imagem_transformada[imagem_transformada < 0] = 0
+    canais_dente_serra = []
+    for canal in canais:
+        # Aplicar a função dente de serra
+        canal_dente_serra = (canal % T) * (255 // T)
 
-    return imagem_transformada
+        # Garantir valores válidos entre 0 e 255
+        canal_dente_serra = np.clip(canal_dente_serra, 0, 255)
+        canais_dente_serra.append(canal_dente_serra)
+
+    # Reunir os canais manualmente
+    imagem_dente_serra = np.stack(canais_dente_serra, axis=-1)
+    return imagem_dente_serra.astype(np.uint8)
 
 def transformada_logaritmica(imagem):
-    # Adicionar um valor muito pequeno para evitar log(0)
-    imagem_temp = imagem + 1e-5  # Adiciona um valor pequeno sem alterar a imagem original
+    # Separar os canais manualmente
+    canais = [imagem[:, :, 0], imagem[:, :, 1], imagem[:, :, 2]]  # R, G, B
 
-    # Calcular o valor máximo da imagem
-    I_max = np.max(imagem_temp)
+    canais_log = []
+    for canal in canais:
+        # Adicionar um pequeno valor para evitar log(0)
+        canal_temp = canal + 1e-5
 
-    # Garantir que I_max não seja zero
-    if I_max == 0:
-        I_max = 1
+        # Calcular a constante de normalização
+        I_max = np.max(canal_temp)
+        c = 255 / np.log(1 + I_max)
 
-    # Calcular a constante de normalização 'c'
-    c = 255 / (np.log(1 + I_max))
+        # Aplicar a transformação logarítmica
+        canal_log = c * np.log(1 + canal_temp)
 
-    # Aplicar a transformação logarítmica
-    imagem_transformada = c * np.log(1 + imagem_temp)
+        # Reescalar para [0, 255]
+        canal_log = (canal_log - np.min(canal_log)) * (255 / (np.max(canal_log) - np.min(canal_log)))
 
-    # Normalizar o resultado para a faixa [0, 255]
-    imagem_transformada = (imagem_transformada - np.min(imagem_transformada)) * (255 / (np.max(imagem_transformada) - np.min(imagem_transformada)))
+        # Garantir valores válidos entre 0 e 255
+        canal_log = np.clip(canal_log, 0, 255)
+        canais_log.append(canal_log)
 
-    return imagem_transformada.astype(np.uint8)
+    # Reunir os canais manualmente
+    imagem_log = np.stack(canais_log, axis=-1)
+    return imagem_log.astype(np.uint8)
+
 
 # Carregar a imagem
-imagem = cv2.imread('../image/cidade_1024X1024.png', cv2.IMREAD_GRAYSCALE)
+imagem = cv2.imread('../image/cidade_1024X1024.png')
 
 # Aplicar as transformações radiométricas
 imagem_expansao = expansao_contraste_linear(imagem)
