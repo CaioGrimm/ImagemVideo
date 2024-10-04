@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-import numpy as np
-
 def quantizar_imagem(imagem, num_cores=64):
     # Dividir o intervalo de valores de 0 a 255 em 'num_cores' cores
     fator_quantizacao = 256 // num_cores
