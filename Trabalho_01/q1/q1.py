@@ -23,7 +23,7 @@ def alterar_brilho(imagem, fator_brilho):
     return imagem_brilho
 
 # Lendo a imagem
-imagem = cv2.imread('../image/cidade_300x300.png')  # Carregar a imagem com OpenCV
+imagem = cv2.imread('../image/cidade_1024X1024.png')  # Carregar a imagem com OpenCV
 
 # Alterar o brilho
 fator_brilho = 50  # Exemplo: aumenta o brilho em 50 unidades
